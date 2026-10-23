@@ -1,7 +1,7 @@
 {
   "name": "figma-comment-sweep",
   "version": "0.1.0",
-  "description": "Read-only Figma comment sweeps for Node and Pi",
+  "description": "Figma Comment Sweep: read-only comment catch-up for Node and Pi",
   "repository": {
     "type": "git",
     "url": "https://github.com/cammcnab/figma-comment-sweep.git"

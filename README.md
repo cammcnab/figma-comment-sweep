@@ -1,4 +1,4 @@
-# figma-comment-sweep
+# Figma Comment Sweep
 
 Read-only Figma comment sweeps: a host-independent JavaScript core, zero-dependency Node CLI, and thin Pi extension. MIT licensed; Node **22+**; no build step.
 
