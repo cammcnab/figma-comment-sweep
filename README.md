@@ -53,9 +53,13 @@ Only GET requests are made to `https://api.figma.com/v1`. Redirects are rejected
 
 - At most **100 files** are checked, pinned first, then discoveries by modification time; duplicate file keys merge.
 - At most **four** comment requests run concurrently.
-- Default output limit is 100; `--max-comments` accepts integers 1–1000. `--all` includes previously reported comments.
-- Unseen comments are prioritized over already-reported mentions, newest first within each group. Previously reported mentions remain eligible by default.
-- Only IDs actually returned in the report are added to `state.json`; deferred comments remain unseen. IDs are not evicted. Legacy `seenCommentIds` are deliberately not trusted, recovering comments fetched but never returned.
+- Default primary output limit is 100; `--max-comments` accepts integers 1–1000. `--all` includes previously reported incoming comments, not your own comments.
+- Every unseen comment in checked/watched files is eligible; watching/discovering a file does **not** establish ownership or editing activity. Unseen comments precede already-reported mentions, newest first within each group. Previously reported mentions remain eligible by default.
+- Incoming feedback excludes your own comments **only** when `/me` supplies an ID matching the comment author's ID. Names/aliases never establish authorship; if identity is unavailable, alias mentions still work and no authors are excluded.
+- The existing flat `comments` array and `file`, `comment`, `mentioned`, `isNew` fields remain. Primary items add `isContext: false`, `isOwn`, and `relevanceReason`: `mentions-you`, `thread-follow-up` (a preceding incoming mention in the same thread), `new-in-watched-file`, or `previously-reported-in-watched-file` for explicit history. Follow-ups need not mention you again.
+- Each primary adds chronological nested `context` items marked `isContext: true` and `isOwn` (text labels your own context as `you`). Threads are isolated by file and root/`parent_id`. A reply includes its available root and latest preceding incoming mention; new feedback also includes up to five most recent other discussion comments, including subsequent replies. At most seven context items accompany a primary, outside its budget. Equal timestamps order roots first, then IDs; exact reply chronology cannot be recovered from equal timestamps.
+- Already-reported primary comments get only their root/preceding mention, not a replay of the discussion, even with `--all`. `contextOmitted` explicitly counts other omitted thread comments; `parentMissing` flags unavailable parents. Context can overlap other primaries and may include deferred unseen feedback. It is supporting discussion, not a second delivery queue.
+- **Only top-level primary IDs** are added to `state.json`. Nested context IDs are never added unless independently selected as primary; deferred comments remain unseen even if displayed as context. Own context remains unreported. IDs are not evicted. Legacy `seenCommentIds` are deliberately not trusted, recovering comments fetched but never returned.
 - This is local delivery bookkeeping, **not** Figma read/resolve status. A successful sweep records delivery before the caller displays output; if output delivery fails, rerun with `--all`.
 - Missing config/state starts empty; malformed JSON or invalid schema fails instead of silently resetting data.
 - Writes use private temporary files and atomic rename. New directories use mode 0700 and files 0600 (POSIX; Windows uses platform ACL behavior). Existing directory permissions are not changed.
@@ -81,4 +85,4 @@ The core has no Node/Pi imports. `figma-comments/node` exports `createService`, 
 node --test
 ```
 
-Tests run offline with mocked APIs and temporary directories: capped sweeps, concurrency, legacy recovery, deferred delivery, mention boundaries, private writes, malformed JSON, locks, redaction, GET-only transport, CLI parsing/JSON/help. No credentials or live Figma API are needed. CI runs Node 22/24 on Linux, macOS, and Windows.
+Tests run offline with mocked APIs and temporary directories: capped sweeps, concurrency, legacy recovery, deferred delivery, bounded thread context, own-author identity, file-local threads, missing parents, timestamp ties, mention boundaries, private writes, malformed JSON, locks, redaction, GET-only transport, CLI parsing/JSON/help. No credentials or live Figma API are needed. CI runs Node 22/24 on Linux, macOS, and Windows.

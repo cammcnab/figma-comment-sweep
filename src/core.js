@@ -1,4 +1,4 @@
-import { isMentioned, selectForReport, reportedIds } from './logic.js';
+import { isMentioned, selectForReport, reportedIds, withThreadContext } from './logic.js';
 export { isMentioned, selectForReport, reportedIds } from './logic.js';
 export const MAX_FILES = 100;
 export function extractKeys(text) {
@@ -36,14 +36,15 @@ export async function sweep({ config, state = {}, candidates = [], get, includeS
       try {
         const response = await get(`/files/${file.key}/comments?as_md=true`);
         if (!Array.isArray(response.comments) || response.comments.some(c => !c || typeof c.id !== 'string' || typeof c.message !== 'string' || typeof c.created_at !== 'string')) throw new Error('Invalid response');
-        return response.comments.map(comment => ({file, comment, mentioned: isMentioned(comment,user,config.aliases), isNew: !seen.has(comment.id)}));
+        return response.comments.map(comment => ({file, comment, mentioned: isMentioned(comment,user,config.aliases), isNew: !seen.has(comment.id), isOwn: Boolean(user?.id && comment.user?.id === user.id)}));
       } catch { errors.push({key: file.key, error: 'Unable to read comments (check access, token scopes, and rate limits).'}); return []; }
     }));
     all.push(...batch.flat());
   }
-  const {relevant, deferred} = selectForReport(all,includeSeen,maxComments);
+  const selected = selectForReport(all,includeSeen,maxComments);
+  const relevant = withThreadContext(all, selected.relevant), deferred = selected.deferred;
   return { checkedFiles: files.length, candidateFiles: discovered.length, skippedFiles: discovered.length-files.length, totalComments: all.length, comments: relevant, deferred, errors, legacyReset: Boolean(state.seenCommentIds && !state.reportedCommentIds), state: {reportedCommentIds: reportedIds(previous,relevant), lastRunAt: now()} };
 }
 export function formatSweep(result) {
-  return [`Figma comment sweep: checking ${result.checkedFiles}/${result.candidateFiles} candidate files (max 100; ${result.skippedFiles} skipped).`, `Found ${result.totalComments} comments; reporting ${result.comments.length}; ${result.deferred} eligible comments deferred. Unreported comments remain unseen.`, 'Read-only Figma access; local reporting never changes Figma read/resolved status.', ...(result.legacyReset ? ['Legacy seen tracking reset to recover unreported comments.'] : []), ...result.comments.map(({file,comment:c,mentioned,isNew}) => `\n- ${file.label ?? file.key} (${[isNew && 'new',mentioned && 'mentioned',c.resolved_at ? 'resolved' : 'open'].filter(Boolean).join(', ')})\n  ${(c.user?.name ?? c.user?.handle ?? 'Unknown')} · ${c.created_at}\n  ${c.message.replace(/\s+/g,' ').trim()}\n  https://www.figma.com/design/${file.key}?comment-id=${encodeURIComponent(c.id)}`), ...result.errors.map(e => `${e.key}: ${e.error}`)].join('\n');
+  return [`Figma comment sweep: checking ${result.checkedFiles}/${result.candidateFiles} candidate files (max 100; ${result.skippedFiles} skipped).`, `Found ${result.totalComments} comments; reporting ${result.comments.length}; ${result.deferred} eligible comments deferred. Unreported comments remain unseen.`, 'Read-only Figma access; local reporting never changes Figma read/resolved status.', ...(result.legacyReset ? ['Legacy seen tracking reset to recover unreported comments.'] : []), ...result.comments.map(({file,comment:c,mentioned,isNew,relevanceReason,context = [],contextOmitted = 0,parentMissing}) => `\n- ${file.label ?? file.key} (${[isNew && 'new',mentioned && 'mentioned',c.resolved_at ? 'resolved' : 'open',relevanceReason].filter(Boolean).join(', ')})\n  ${(c.user?.name ?? c.user?.handle ?? 'Unknown')} · ${c.created_at}\n  ${c.message.replace(/\s+/g,' ').trim()}\n  https://www.figma.com/design/${file.key}?comment-id=${encodeURIComponent(c.id)}${context.map(item => `\n  [context${item.isOwn ? ', you' : ''}] ${item.comment.user?.name ?? item.comment.user?.handle ?? 'Unknown'} · ${item.comment.created_at}: ${item.comment.message.replace(/\s+/g,' ').trim()}`).join('')}${contextOmitted ? `\n  [${contextOmitted} other thread comments omitted]` : ''}${parentMissing ? '\n  [Parent comment unavailable]' : ''}`), ...result.errors.map(e => `${e.key}: ${e.error}`)].join('\n');
 }
