@@ -20,6 +20,74 @@ cd figma-comment-sweep
 node src/cli.js --help
 ```
 
+## Authentication (required before your first sweep)
+
+**Each user must create their own Figma personal access token (PAT).** Installing the package does not sign you in, reuse a Figma Desktop session, or provide a shared token. There is no built-in OAuth sign-in. Your token can only read files your Figma account can access.
+
+### 1. Create a token in Figma
+
+Follow [Figma's personal access token guide](https://developers.figma.com/docs/rest-api/personal-access-tokens/):
+
+1. Sign in to Figma. From the file browser, open the account menu → **Settings** → **Security**.
+2. Under **Personal access tokens**, select **Generate new token**.
+3. Give it a recognizable name, such as `Figma Comment Sweep`, and choose an expiration.
+4. Select these scopes:
+   - **`file_comments:read` — required:** reads comments on accessible files.
+   - **`current_user:read` — recommended:** identifies your account for automatic mention matching and excluding your own comments from incoming feedback. Without it, sweeps still work with configured aliases, but cannot reliably filter your own comments.
+5. Generate the token and save it in a password manager. Figma only shows it once. No write scopes are needed.
+
+### 2. Make the token available locally
+
+Set **`FIGMA_ACCESS_TOKEN`** in the environment of the process running the CLI or Pi. These hidden-input examples keep the token out of shell history (run only the block for your shell):
+
+**Bash (macOS/Linux):**
+
+```bash
+read -r -s -p 'Figma token: ' FIGMA_ACCESS_TOKEN; printf '\n'
+export FIGMA_ACCESS_TOKEN
+```
+
+**Zsh (default macOS shell):**
+
+```zsh
+read -r -s 'FIGMA_ACCESS_TOKEN?Figma token: '; printf '\n'
+export FIGMA_ACCESS_TOKEN
+```
+
+**PowerShell (Windows):**
+
+```powershell
+$token = Read-Host 'Figma token' -AsSecureString
+$env:FIGMA_ACCESS_TOKEN = [System.Net.NetworkCredential]::new('', $token).Password
+Remove-Variable token
+```
+
+These examples apply to the current shell session only. Then launch `pi` or run the CLI **from that same shell**. An already-running Pi process cannot inherit a newly exported token; restart it from this shell. For persistent setup, use your password manager's secret injection or another secure environment provider. The package does **not** automatically load `.env` files.
+
+**Optional macOS storage:** instead of an environment variable, store the token in macOS Keychain as a generic password with service `pi-figma-comments-token`, then set `"keychain": true` in your local `config.json` (preserve its other fields). This is optional, not a cross-platform requirement. An environment token always takes precedence.
+
+Never paste a token into an agent chat, commit it, put it in `config.json`, or pass its literal value as a CLI argument. Revoke it in Figma if exposed. When it expires or is revoked, generate a replacement with the same scopes and update your local secret.
+
+### 3. Check setup and read a file
+
+In Pi:
+
+```text
+/figma-comments status
+/figma-comments add https://www.figma.com/design/FILEKEY Design review
+/figma-comments sweep
+```
+
+Or from the CLI checkout:
+
+```sh
+node src/cli.js status --json
+node src/cli.js add https://www.figma.com/design/FILEKEY Design review
+node src/cli.js sweep
+```
+
+Replace `FILEKEY` with a file you can access. **Status only confirms that a token is available locally; it does not validate it against Figma.** The sweep checks actual API access. If a file cannot be read, check token expiration/scopes and file access; rate limits may require waiting before trying again.
+
 ## Run
 
 From the checkout:
