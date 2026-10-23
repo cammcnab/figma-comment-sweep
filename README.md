@@ -4,8 +4,6 @@ Read-only Figma comment sweeps: a host-independent JavaScript core, zero-depende
 
 ## Install
 
-The repository is currently private; GitHub access is required.
-
 For Pi:
 
 ```sh
