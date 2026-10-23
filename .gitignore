@@ -1,0 +1,11 @@
+node_modules/
+*.tgz
+.env
+.env.*
+.DS_Store
+coverage/
+# Runtime data must never be committed.
+config.json
+state.json
+.lock/
+*.tmp
