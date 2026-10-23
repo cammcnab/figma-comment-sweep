@@ -1,14 +1,20 @@
 {
-  "name": "figma-comments",
+  "name": "figma-comment-sweep",
   "version": "0.1.0",
   "description": "Read-only Figma comment sweeps for Node and Pi",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cammcnab/figma-comment-sweep.git"
+  },
+  "homepage": "https://github.com/cammcnab/figma-comment-sweep",
+  "bugs": { "url": "https://github.com/cammcnab/figma-comment-sweep/issues" },
   "type": "module",
   "license": "MIT",
   "engines": {
     "node": ">=22"
   },
   "bin": {
-    "figma-comments": "./src/cli.js"
+    "figma-comment-sweep": "./src/cli.js"
   },
   "exports": {
     ".": "./src/core.js",

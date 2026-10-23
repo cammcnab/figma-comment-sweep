@@ -1,8 +1,28 @@
-# figma-comments
+# figma-comment-sweep
 
 Read-only Figma comment sweeps: a host-independent JavaScript core, zero-dependency Node CLI, and thin Pi extension. MIT licensed; Node **22+**; no build step.
 
+## Install
+
+The repository is currently private; GitHub access is required.
+
+For Pi:
+
+```sh
+pi install git:github.com/cammcnab/figma-comment-sweep
+```
+
+For the standalone CLI (no Pi required):
+
+```sh
+git clone https://github.com/cammcnab/figma-comment-sweep.git
+cd figma-comment-sweep
+node src/cli.js --help
+```
+
 ## Run
+
+From the checkout:
 
 ```sh
 node src/cli.js --help
@@ -13,7 +33,7 @@ node src/cli.js sweep --max-comments 100
 node src/cli.js sweep --all --json
 ```
 
-The package also exposes the `figma-comments` executable when installed/linked. No install is needed to run the CLI or tests from this checkout. Host peers are optional for CLI-only use. Authentication is never needed for help, status, or add.
+The package also exposes the `figma-comment-sweep` executable when installed/linked. No install is needed to run the CLI or tests from this checkout. Host peers are optional for CLI-only use. Authentication is never needed for help, status, or add.
 
 For Pi, load once without changing settings:
 
@@ -21,7 +41,9 @@ For Pi, load once without changing settings:
 pi --extension ./extensions/index.ts
 ```
 
-Or explicitly install the local package with `pi install /absolute/path/to/figma-comments`. This registers `figma_comment_sweep` and `/figma-comments status | add <URL> [label] | sweep [--all] [--max-comments N]`. The adapter imports Pi's current `@earendil-works/pi-coding-agent` and `@earendil-works/pi-ai` peers; Pi supplies them. Pi settings are not modified simply by running this package's CLI.
+Or explicitly install the local package with `pi install /absolute/path/to/figma-comment-sweep`. This registers `figma_comment_sweep` and `/figma-comments status | add <URL> [label] | sweep [--all] [--max-comments N]`. The adapter imports Pi's current `@earendil-works/pi-coding-agent` and `@earendil-works/pi-ai` peers; Pi supplies them. Pi settings are not modified simply by running this package's CLI.
+
+The Pi slash command remains `/figma-comments` for compatibility; the package and CLI are named `figma-comment-sweep`.
 
 ## Configuration
 
@@ -70,14 +92,14 @@ Only GET requests are made to `https://api.figma.com/v1`. Redirects are rejected
 ## Library API
 
 ```js
-import { sweep, formatSweep } from 'figma-comments';
+import { sweep, formatSweep } from 'figma-comment-sweep';
 // config/state/candidates are plain data; get(endpoint) is an injected GET transport.
 const result = await sweep({ config: { files: [{ key: 'FILEKEY' }] }, get });
 console.log(formatSweep(result));
 // Persist result.state yourself only after a successful sweep.
 ```
 
-The core has no Node/Pi imports. `figma-comments/node` exports `createService`, discovery, transport, and storage helpers for Node hosts. The service owns authentication, discovery, locking, and persistence; CLI and Pi use exactly this shared implementation.
+The core has no Node/Pi imports. `figma-comment-sweep/node` exports `createService`, discovery, transport, and storage helpers for Node hosts. The service owns authentication, discovery, locking, and persistence; CLI and Pi use exactly this shared implementation.
 
 ## Test
 

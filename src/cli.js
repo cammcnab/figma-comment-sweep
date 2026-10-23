@@ -2,7 +2,7 @@
 import { pathToFileURL } from 'node:url';
 import { createService } from './node.js';
 import { formatSweep } from './core.js';
-export const HELP = `Usage: figma-comments [status | add <Figma URL> [label] | sweep] [options]
+export const HELP = `Usage: figma-comment-sweep [status | add <Figma URL> [label] | sweep] [options]
   --help                 Show help (no authentication required)
   --json                 Emit structured JSON
   --all                  Include previously reported comments (sweep only)
